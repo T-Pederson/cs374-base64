@@ -47,6 +47,7 @@ main(int argc, char *argv[])
   // loop
   dfl_stdin:;
     unsigned char buf[BUFSIZ];
+    int new_line = 0;
     for (;;) {
       // read input bytes
       size_t nr = fread(buf, 1, sizeof buf, fp);
@@ -56,6 +57,7 @@ main(int argc, char *argv[])
       // convert input bytes to integer indicies
       size_t wrap_count = 0;
       for (size_t i = 0; i < nr; ++i) {
+        new_line = 1;
         // Shift 3 bytes into a dword
         int bytes = 1;
         unsigned long dword = buf[i];
@@ -86,13 +88,14 @@ main(int argc, char *argv[])
             dword &= 0xffffff;     /* Discard upper bits > 24th position */
           }
           ++wrap_count;
-          if (wrap_count == 76 && i != nr - 1 && i != nr && i != nr + 1) {
+          if (wrap_count == 76) {
             putchar('\n');
             wrap_count = 0;
+            new_line = 0;
           }
         }
       }
-      putchar('\n');
+      if (new_line == 1) putchar('\n');
       if (nr < sizeof buf) break; // end of file, partial buffer
     }
     if (fp != stdin)
