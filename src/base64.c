@@ -7,8 +7,6 @@
 #include <string.h>
 #include <limits.h>
 
-#include "gprintf.h"
-
 static char const b64a[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                            "abcdefghijklmnopqrstuvwxyz"
                            "0123456789"
@@ -46,7 +44,7 @@ main(int argc, char *argv[])
 
   // loop
   dfl_stdin:;
-    char buf[BUFSIZ];
+    unsigned char buf[BUFSIZ];
     for (;;) {
       // read input bytes
       size_t nr = fread(buf, 1, sizeof buf, fp);
@@ -86,12 +84,15 @@ main(int argc, char *argv[])
             dword &= 0xffffff;     /* Discard upper bits > 24th position */
           }
           ++wrap_count;
-          if (wrap_count == 76) putchar('\n');
+          if (wrap_count == 76 && i != nr - 1) {
+            putchar('\n');
+            wrap_count = 0;
+          }
         }
       }
+      putchar('\n');
       if (nr < sizeof buf) break; // end of file, partial buffer
     }
-    putchar('\n');
     if (fp != stdin)
       fclose(fp);
   }

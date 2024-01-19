@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-exe=${1:-build/release/base64}
+exe=${1:-../build/release/base64}
 
 tput bold
 printf 'Testing basic input strings\n'
@@ -45,6 +45,7 @@ do
   printf 'Input: %d random bytes\n' "$size"
   
   head -c $size /dev/random >"$tmp"
+  printf 'Input `%s`:\n' "$(cat "$tmp")"
   printf 'Expecting output `%s%s%s`:\n' "$(tput setaf 5)" "$(base64 "$tmp")" "$(tput setaf 9)"
   tput sgr0
   "$exe" "$tmp"
