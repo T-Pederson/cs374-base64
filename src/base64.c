@@ -52,7 +52,6 @@ main(int argc, char *argv[])
       size_t nr = fread(buf, 1, sizeof buf, fp);
       if (nr < sizeof buf && ferror(stdin)) err(EXIT_FAILURE, "%s", argv[1]);
       if (nr == 0) break; // end of file, empty buffer
-      if (nr < sizeof buf) break; // end of file, partial buffer
 
       // convert input bytes to integer indicies
       size_t wrap_count = 0;
@@ -90,6 +89,7 @@ main(int argc, char *argv[])
           if (wrap_count == 76) putchar('\n');
         }
       }
+      if (nr < sizeof buf) break; // end of file, partial buffer
     }
     putchar('\n');
     if (fp != stdin)
