@@ -15,7 +15,7 @@ static char const b64a[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                            "+/";
 static char const pad_char = '=';        /* Padding character */
 
-#define TRIBBLE_BIT 3
+#define SIX_BIT 6
 
 int
 main(int argc, char *argv[])
@@ -75,14 +75,14 @@ main(int argc, char *argv[])
         }
 
         // convert integer indices to base64 alphabet characters and write output while handling line wrapping
-        for (int j = 0; j < ((3 * CHAR_BIT) / TRIBBLE_BIT); ++j) {
-          if ((j * TRIBBLE_BIT) > (bytes * CHAR_BIT)) {
+        for (int j = 0; j < ((3 * CHAR_BIT) / SIX_BIT); ++j) {
+          if ((j * SIX_BIT) > (bytes * CHAR_BIT)) {
             putchar(pad_char);
           } else {
-            int idx = dword >> (3 * CHAR_BIT - TRIBBLE_BIT);
+            int idx = dword >> (3 * CHAR_BIT - SIX_BIT);
             char c = b64a[idx];
             putchar(c);
-            dword <<= TRIBBLE_BIT; /* Left shift */
+            dword <<= SIX_BIT; /* Left shift */
             dword &= 0xffffff;     /* Discard upper bits > 24th position */
           }
           ++wrap_count;
