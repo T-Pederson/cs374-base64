@@ -11,9 +11,6 @@ static char const b64a[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                            "abcdefghijklmnopqrstuvwxyz"
                            "0123456789"
                            "+/";
-static char const pad_char = '=';        /* Padding character */
-
-#define SIX_BIT 6
 
 int
 main(int argc, char *argv[])
@@ -48,55 +45,45 @@ main(int argc, char *argv[])
 
   // loop
   dfl_stdin:;
-    unsigned char buf[BUFSIZ * 1000];
+    size_t wrap_count = 0;
     for (;;) {
       // read input bytes
+      unsigned char buf[3] = {0};
       size_t nr = fread(buf, 1, sizeof buf, fp);
       if (nr < sizeof buf && ferror(stdin)) err(EXIT_FAILURE, "%s", argv[1]);
       if (nr == 0) break; // end of file, empty buffer
 
       // convert input bytes to integer indicies
-      size_t wrap_count = 0;
-      for (size_t i = 0; i < nr; ++i) {
-        // Shift 3 bytes into a dword
-        int bytes = 1;
-        unsigned long dword = buf[i];
+      // Shift 3 bytes into bits
+      long long unsigned int bits = 0;
+      bits |= buf[0];
+      bits <<= CHAR_BIT;
+      bits |= buf[1];
+      bits <<= CHAR_BIT;
+      bits |= buf[2];
 
-        // Second byte
-        dword <<= CHAR_BIT;
-        if (++i < nr) {
-          dword |= buf[i];
-          ++bytes;
-        }
-
-        // Third byte
-        dword <<= CHAR_BIT;
-        if (++i < nr) {
-          dword |= buf[i];
-          ++bytes;
-        }
-
-        // convert integer indices to base64 alphabet characters and write output while handling line wrapping
-        for (int j = 0; j < ((3 * CHAR_BIT) / SIX_BIT); ++j) {
-          if ((j * SIX_BIT) > (bytes * CHAR_BIT)) {
-            putchar(pad_char);
-          } else {
-            int idx = dword >> (3 * CHAR_BIT - SIX_BIT);
-            char c = b64a[idx];
-            putchar(c);
-            dword <<= SIX_BIT; /* Left shift */
-            dword &= 0xffffff;     /* Discard upper bits > 24th position */
-          }
-          ++wrap_count;
-          if (wrap_count >= 76) {
-            putchar('\n');
-            wrap_count = 0;
-          }
-        }
+      // convert integer indices to base64 alphabet characters and write output while handling line wrapping
+      char b64o[4];
+      for (int i = sizeof b64o - 1; i >= 0; --i) {
+        unsigned char idx = bits & 0x3f;
+        b64o[i] = b64a[idx];
+        bits >>= 6;
       }
-      if (wrap_count != 0) putchar('\n');
+
+      if (nr < 3) b64o[3] = '=';
+      if (nr < 2) b64o[2] = '=';
+
+      fwrite(b64o, 1, sizeof b64o, stdout);
+
+      wrap_count += 4;
+      if (wrap_count >= 76) {
+        putchar('\n');
+        wrap_count = 0;
+      }
+
       if (nr < sizeof buf) break; // end of file, partial buffer
     }
+    if (wrap_count != 0) putchar('\n');
     if (fp != stdin)
       fclose(fp);
   }
